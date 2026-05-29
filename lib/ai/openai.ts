@@ -24,12 +24,21 @@ let openaiClient: OpenAI | null = null;
 
 function getOpenAIClient(): OpenAI {
   if (!openaiClient) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY environment variable is missing.');
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+
+    if (geminiKey && geminiKey !== 'your-gemini-api-key-here') {
+      openaiClient = new OpenAI({
+        apiKey: geminiKey,
+        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+      });
+    } else if (openaiKey && openaiKey !== 'your-openai-api-key-here') {
+      openaiClient = new OpenAI({
+        apiKey: openaiKey,
+      });
+    } else {
+      throw new Error('Neither GEMINI_API_KEY nor OPENAI_API_KEY environment variable is configured.');
     }
-    openaiClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
   }
   return openaiClient;
 }
@@ -103,7 +112,7 @@ export async function generateArticleDraft(
   newsTitle: string,
   newsContent: string,
   userPrompt: string,
-  modelName: string = 'gpt-4o-mini'
+  modelName: string = 'gemini-1.5-flash'
 ): Promise<GenerateResult> {
   const client = getOpenAIClient();
 

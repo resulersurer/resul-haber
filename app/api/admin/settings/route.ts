@@ -15,7 +15,7 @@ const patchSettingsSchema = z.object({
 
 const DEFAULT_SETTINGS = {
   global_default_prompt: 'Bu kaynak haberi, genel okuyucu kitlesine hitap edecek şekilde özgün bir haber analizine dönüştür. Haberi kopyalama. Gelişmenin günlük hayata, teknoloji algısına ve geleceğe olan etkilerini açıkla. Sade, akıcı bir Türkçe kullan. Ağır teknik terimlerden kaçın ve terimleri açıkla. Başlık dikkat çekici ama dürüst, SEO uyumlu bir başlık olsun.',
-  openai_model: 'gpt-4o-mini',
+  openai_model: 'gemini-1.5-flash',
   content_length_preference: 'medium',
   publishing_mode: 'manual',
 };

@@ -91,7 +91,7 @@ export default function SettingsPage() {
             Sistem Ayarları
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Global varsayılan promptları, OpenAI yapay zeka modellerini ve içerik üretim ayarlarını yapılandırın.
+            Global varsayılan promptları, Google Gemini yapay zeka modellerini ve içerik üretim ayarlarını yapılandırın.
           </p>
         </div>
       </div>
@@ -128,20 +128,20 @@ export default function SettingsPage() {
               Yapay Zeka Motor Ayarları
             </h2>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Model preference */}
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                OpenAI GPT Modeli
+                Google Gemini Modeli
               </label>
               <select
                 value={openaiModel}
                 onChange={(e) => setOpenaiModel(e.target.value)}
                 className="w-full bg-slate-955 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-sm"
               >
-                <option value="gpt-4o-mini">gpt-4o-mini (Hızlı ve Ekonomik)</option>
-                <option value="gpt-4o">gpt-4o (Gelişmiş Akıl Yürütme)</option>
+                <option value="gemini-1.5-flash">gemini-1.5-flash (Hızlı ve Ekonomik)</option>
+                <option value="gemini-2.5-flash">gemini-2.5-flash (Yeni, Hızlı)</option>
+                <option value="gemini-1.5-pro">gemini-1.5-pro (Gelişmiş Akıl Yürütme)</option>
               </select>
             </div>
 
