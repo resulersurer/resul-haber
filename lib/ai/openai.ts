@@ -116,6 +116,14 @@ export async function generateArticleDraft(
 ): Promise<GenerateResult> {
   const client = getOpenAIClient();
 
+  // Map OpenAI model names to Gemini model names if using Gemini API
+  let resolvedModel = modelName;
+  if (process.env.GEMINI_API_KEY) {
+    if (resolvedModel.startsWith('gpt-')) {
+      resolvedModel = resolvedModel === 'gpt-4o' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+    }
+  }
+
   const userContent = `Aşağıdaki kaynak haberi, belirtilen yönergelere göre özgün bir makaleye dönüştür.
   
 KULLANICI TALİMATI (PROMPT):
@@ -129,7 +137,7 @@ ${newsContent}`;
 
   try {
     const completion = await client.chat.completions.create({
-      model: modelName,
+      model: resolvedModel,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userContent },
@@ -153,7 +161,7 @@ ${newsContent}`;
       data: validatedData,
       rawResponse,
       tokensUsed,
-      modelUsed: modelName,
+      modelUsed: resolvedModel,
     };
   } catch (error: any) {
     console.error('OpenAI generation or validation error:', error);
@@ -161,7 +169,7 @@ ${newsContent}`;
       data: null,
       rawResponse: error.response?.data || null,
       tokensUsed: null,
-      modelUsed: modelName,
+      modelUsed: resolvedModel,
       error: error.message || 'AI Generation failed',
     };
   }
