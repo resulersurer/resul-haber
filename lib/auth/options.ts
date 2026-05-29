@@ -33,8 +33,18 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Compare using bcrypt
-        const isValidPassword = bcrypt.compareSync(credentials.password, passwordHash);
+        // Compare using bcrypt or plain-text fallback
+        let isValidPassword = false;
+        try {
+          if (passwordHash.startsWith('$2a$') || passwordHash.startsWith('$2b$') || passwordHash.startsWith('$2y$')) {
+            isValidPassword = bcrypt.compareSync(credentials.password, passwordHash);
+          }
+        } catch (e) {
+          // ignore bcrypt errors and fallback
+        }
+        if (!isValidPassword) {
+          isValidPassword = credentials.password === passwordHash;
+        }
 
         if (isValidPassword) {
           return {
