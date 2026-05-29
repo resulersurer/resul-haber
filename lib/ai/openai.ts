@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 import { z } from 'zod';
 
 // Zod Schema to validate AI output
@@ -8,7 +7,7 @@ export const aiResponseSchema = z.object({
   title: z.string(),
   slug: z.string(),
   excerpt: z.string(),
-  content: z.string(), // Markdown formatted
+  content: z.string(),
   category: z.string(),
   tags: z.array(z.string()),
   seo_title: z.string(),
@@ -19,30 +18,6 @@ export const aiResponseSchema = z.object({
 
 export type AIResponse = z.infer<typeof aiResponseSchema>;
 
-// Initialize OpenAI client lazily
-let openaiClient: OpenAI | null = null;
-
-function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    const geminiKey = process.env.GEMINI_API_KEY;
-    const openaiKey = process.env.OPENAI_API_KEY;
-
-    if (geminiKey && geminiKey !== 'your-gemini-api-key-here') {
-      openaiClient = new OpenAI({
-        apiKey: geminiKey,
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-      });
-    } else if (openaiKey && openaiKey !== 'your-openai-api-key-here') {
-      openaiClient = new OpenAI({
-        apiKey: openaiKey,
-      });
-    } else {
-      throw new Error('Neither GEMINI_API_KEY nor OPENAI_API_KEY environment variable is configured.');
-    }
-  }
-  return openaiClient;
-}
-
 const SYSTEM_PROMPT = `Sen haber.ersurer.com için çalışan bir AI editörsün.
 
 Görevin, kaynaklardan gelen haberleri birebir kopyalamadan; genel okuyucu kitlesine hitap eden, özgün, sade, anlaşılır, bilgilendirici ve merak uyandırıcı içeriklere dönüştürmektir.
@@ -50,12 +25,10 @@ Görevin, kaynaklardan gelen haberleri birebir kopyalamadan; genel okuyucu kitle
 Yazım tarzı:
 * Türkçe yaz.
 * Sade, net, akıcı ve profesyonel ol.
-* Aşırı akademik veya ağır teknik jargon kullanma. Teknik terimleri okuyucunun anlayacağı şekilde açıkla.
+* Aşırı akademik veya ağır teknik jargon kullanma.
 * Samimi, tarafsız ve merak uyandıran bir ton kullan.
-* Haberin bireylerin günlük yaşantısına, teknoloji algısına, geleceğe veya topluma ne gibi etkiler getireceğini açıkla.
 * Clickbait başlık kullanma, ilgi çekici ama dürüst başlıklar üret.
 * Haberi kopyalama, özgün cümlelerle yeniden yorumla.
-* Orijinal haber kaynağını mutlaka belirt.
 
 İçerik formatı (content alanı içinde tam olarak bu markdown şablonunu kullan):
 # Başlık
@@ -64,40 +37,39 @@ Yazım tarzı:
 Haberde ne olduğunu 3-4 anlaşılır cümlede anlat.
 
 ## Neden Önemli?
-Bu gelişmenin neden önemli olduğunu ve neden konuşulmaya değer olduğunu açıkla.
+Bu gelişmenin neden önemli olduğunu açıkla.
 
 ## Günlük Hayata ve Geleceğe Etkisi
-Bu gelişmenin insanların günlük yaşantısına, teknoloji kullanımına, iş dünyasına veya geleceğe olan etkilerini ve getirdiği yenilikleri anlat.
+Bu gelişmenin insanların günlük yaşantısına etkilerini anlat.
 
 ## Editörün Yorumu
-Gelişmeye yönelik kısa, nesnel ve vizyoner bir bakış açısı ekle. Bu adımın uzun vadeli önemini yorumla.
+Gelişmeye yönelik kısa, nesnel ve vizyoner bir bakış açısı ekle.
 
 ## Bilinmesi Gerekenler & İpuçları
-Okuyucu için faydalı olabilecek 3-5 önemli detay, ipucu veya yapılması önerilen eylem maddesi yaz.
+Okuyucu için faydalı 3-5 önemli detay yaz.
 
 ## Kaynak
 Orijinal kaynak adını ve bağlantısını belirt.
 
 Yayınlama kriterleri:
-* Teknoloji, bilim, yapay zeka, internet kültürü, oyunlar, dijital yaşam, inovasyon, uzay, sürdürülebilirlik, ekonomi ve genel kültür alanındaki ilgi çekici gelişmeler yayınlanabilir.
-* Tamamen alakasız yerel siyasi tartışmalar, suç haberleri, magazin dedikoduları veya spam içerikli duyurular yayınlanmamalıdır.
-* Uygun değilse should_publish değerini false dön.
+* Teknoloji, bilim, yapay zeka, internet, oyunlar, dijital yaşam, inovasyon, uzay, ekonomi alanları yayınlanabilir.
+* Alakasız siyasi tartışmalar, suç haberleri, magazin veya spam içerik yayınlanmamalıdır.
+* Uygun değilse should_publish: false dön.
 
-ÇIKTI FORMATI:
-Kesinlikle geçerli bir JSON objesi dönmelisin. JSON yapısı şu alanları içermelidir:
+ÇIKTI FORMATI - Sadece geçerli JSON döndür, başında/sonunda \`\`\`json KULLANMA:
 {
   "should_publish": boolean,
-  "reason": "Yayınlanma kriteri değerlendirmesi",
-  "title": "Haber Başlığı",
-  "slug": "url-uyumlu-slug",
-  "excerpt": "Makalenin kısa özeti (SEO meta description olarak da kullanılabilir)",
-  "content": "Yukarıda belirtilen markdown formatında hazırlanmış makale gövdesi",
-  "category": "Kategori adı",
-  "tags": ["etiket1", "etiket2"],
-  "seo_title": "SEO Başlığı",
-  "seo_description": "SEO Açıklaması",
-  "source_name": "Kaynak Adı",
-  "source_url": "Kaynak URL"
+  "reason": "string",
+  "title": "string",
+  "slug": "string",
+  "excerpt": "string",
+  "content": "string",
+  "category": "string",
+  "tags": ["string"],
+  "seo_title": "string",
+  "seo_description": "string",
+  "source_name": "string",
+  "source_url": "string"
 }`;
 
 interface GenerateResult {
@@ -112,49 +84,74 @@ export async function generateArticleDraft(
   newsTitle: string,
   newsContent: string,
   userPrompt: string,
-  modelName: string = 'gemini-1.5-flash'
+  modelName: string = 'gemini-2.5-flash-lite'
 ): Promise<GenerateResult> {
-  const client = getOpenAIClient();
-
-  // Map OpenAI model names to Gemini model names if using Gemini API
-  let resolvedModel = modelName;
-  if (process.env.GEMINI_API_KEY) {
-    if (resolvedModel.startsWith('gpt-')) {
-      resolvedModel = resolvedModel === 'gpt-4o' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
-    }
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return {
+      data: null, rawResponse: null, tokensUsed: null,
+      modelUsed: modelName,
+      error: 'GEMINI_API_KEY ortam değişkeni ayarlanmamış.',
+    };
   }
 
-  const userContent = `Aşağıdaki kaynak haberi, belirtilen yönergelere göre özgün bir makaleye dönüştür.
-  
-KULLANICI TALİMATI (PROMPT):
-"${userPrompt}"
+  // Bu API anahtarıyla çalışan model: gemini-2.5-flash-lite
+  // gemini-1.5-flash bu anahtarda mevcut değil
+  // gemini-2.0-flash ve gemini-2.0-flash-lite kota limit=0 (ücretsiz tier)
+  const WORKING_MODEL = 'gemini-2.5-flash-lite';
+  let resolvedModel = modelName;
+  if (!resolvedModel.startsWith('gemini-2.5-flash-lite')) {
+    resolvedModel = WORKING_MODEL;
+  }
 
-KAYNAK HABER BAŞLIĞI:
-${newsTitle}
+  const prompt = `${SYSTEM_PROMPT}
 
-KAYNAK HABER MAÇ İÇERİĞİ:
+---
+
+Aşağıdaki kaynak haberi özgün bir makaleye dönüştür.
+
+KULLANICI TALİMATI: "${userPrompt}"
+
+HABER BAŞLIĞI: ${newsTitle}
+
+HABER İÇERİĞİ:
 ${newsContent}`;
 
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${resolvedModel}:generateContent?key=${apiKey}`;
+
   try {
-    const completion = await client.chat.completions.create({
-      model: resolvedModel,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userContent },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 8192,
+        },
+      }),
     });
 
-    const rawResponse = completion.choices[0]?.message?.content || null;
-    const tokensUsed = completion.usage?.total_tokens || null;
-
-    if (!rawResponse) {
-      throw new Error('OpenAI returned an empty response.');
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`Gemini API hatası: ${res.status} ${res.statusText}. ${errText}`);
     }
 
-    // Parse and validate using Zod
-    const parsedData = JSON.parse(rawResponse);
+    const json = await res.json();
+    const rawResponse: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    const tokensUsed: number | null = json?.usageMetadata?.totalTokenCount ?? null;
+
+    if (!rawResponse) {
+      throw new Error('Gemini boş yanıt döndürdü.');
+    }
+
+    // Markdown code block varsa temizle
+    let cleaned = rawResponse.trim();
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+    }
+
+    const parsedData = JSON.parse(cleaned);
     const validatedData = aiResponseSchema.parse(parsedData);
 
     return {
@@ -164,13 +161,13 @@ ${newsContent}`;
       modelUsed: resolvedModel,
     };
   } catch (error: any) {
-    console.error('OpenAI generation or validation error:', error);
+    console.error('Gemini REST API error:', error);
     return {
       data: null,
-      rawResponse: error.response?.data || null,
+      rawResponse: null,
       tokensUsed: null,
       modelUsed: resolvedModel,
-      error: error.message || 'AI Generation failed',
+      error: error.message || 'AI üretimi başarısız',
     };
   }
 }

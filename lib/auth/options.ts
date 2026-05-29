@@ -1,6 +1,5 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import bcrypt from 'bcryptjs';
 
 if (!process.env.NEXTAUTH_SECRET && process.env.AUTH_SECRET) {
   process.env.NEXTAUTH_SECRET = process.env.AUTH_SECRET;
@@ -27,24 +26,14 @@ export const authOptions: NextAuthOptions = {
         const emailLower = credentials.email.toLowerCase();
         const isAllowedEmail = allowedEmails.includes(emailLower);
 
-        const passwordHash = process.env.ADMIN_PASSWORD_HASH;
+        const adminPassword = process.env.ADMIN_PASSWORD_HASH;
 
-        if (!isAllowedEmail || !passwordHash) {
+        if (!isAllowedEmail || !adminPassword) {
           return null;
         }
 
-        // Compare using bcrypt or plain-text fallback
-        let isValidPassword = false;
-        try {
-          if (passwordHash.startsWith('$2a$') || passwordHash.startsWith('$2b$') || passwordHash.startsWith('$2y$')) {
-            isValidPassword = bcrypt.compareSync(credentials.password, passwordHash);
-          }
-        } catch (e) {
-          // ignore bcrypt errors and fallback
-        }
-        if (!isValidPassword) {
-          isValidPassword = credentials.password === passwordHash;
-        }
+        // Düz metin karşılaştırma
+        const isValidPassword = credentials.password === adminPassword;
 
         if (isValidPassword) {
           return {

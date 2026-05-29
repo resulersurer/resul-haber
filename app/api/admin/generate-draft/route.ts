@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       .where(eq(systemSettings.key, 'openai_model'))
       .limit(1);
     
-    const modelUsed = settings.length > 0 ? settings[0].value : 'gpt-4o-mini';
+    const modelUsed = settings.length > 0 ? settings[0].value : 'gemini-2.5-flash-lite';
 
     // 3. Generate article draft using OpenAI
     const result = await generateArticleDraft(

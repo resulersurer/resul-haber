@@ -34,62 +34,58 @@ export async function POST(
       return NextResponse.json({ error: 'Bu taslak zaten yayınlanmış.' }, { status: 400 });
     }
 
-    // 2. Execute publishing in a database transaction
-    const published = await db.transaction(async (tx) => {
-      // 2a. Insert into published_articles
-      const [newArticle] = await tx
-        .insert(publishedArticles)
-        .values({
-          draftId: draft.id,
-          title: draft.title,
-          slug: draft.slug,
-          excerpt: draft.excerpt,
-          content: draft.content,
-          category: draft.category,
-          tags: draft.tags,
-          seoTitle: draft.seoTitle,
-          seoDescription: draft.seoDescription,
-          featuredImageUrl: draft.featuredImageUrl,
-          sourceName: draft.sourceName,
-          sourceUrl: draft.sourceUrl,
-          publishedAt: new Date(),
-        })
-        .returning();
+    // 2. Insert into published_articles
+    // neon-http driver transaction desteklemiyor — sıralı sorgular kullanıyoruz
+    const [newArticle] = await db
+      .insert(publishedArticles)
+      .values({
+        draftId: draft.id,
+        title: draft.title,
+        slug: draft.slug,
+        excerpt: draft.excerpt,
+        content: draft.content,
+        category: draft.category,
+        tags: draft.tags,
+        seoTitle: draft.seoTitle,
+        seoDescription: draft.seoDescription,
+        featuredImageUrl: draft.featuredImageUrl,
+        sourceName: draft.sourceName,
+        sourceUrl: draft.sourceUrl,
+        publishedAt: new Date(),
+      })
+      .returning();
 
-      // 2b. Update article_drafts status to published
-      await tx
-        .update(articleDrafts)
-        .set({
-          status: 'published',
-          publishedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(articleDrafts.id, draft.id));
+    // 3. Update article_drafts status to published
+    await db
+      .update(articleDrafts)
+      .set({
+        status: 'published',
+        publishedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(articleDrafts.id, draft.id));
 
-      // 2c. Update raw_news_items status to published
-      if (draft.rawNewsItemId) {
-        await tx
-          .update(rawNewsItems)
-          .set({ status: 'published' })
-          .where(eq(rawNewsItems.id, draft.rawNewsItemId));
-      }
+    // 4. Update raw_news_items status to published
+    if (draft.rawNewsItemId) {
+      await db
+        .update(rawNewsItems)
+        .set({ status: 'published' })
+        .where(eq(rawNewsItems.id, draft.rawNewsItemId));
+    }
 
-      return newArticle;
-    });
-
-    return NextResponse.json(published);
+    return NextResponse.json(newArticle);
   } catch (error: any) {
-    console.error('Failed to execute publication transaction:', error);
-    
-    // Check if error is due to unique slug constraint or draftId constraint
+    console.error('Failed to publish article:', error);
+
+    // Unique constraint ihlali (slug veya draftId çakışması)
     if (error.code === '23505') {
-      return NextResponse.json({ 
-        error: 'Slug çakışması veya bu taslak daha önce yayınlanmış (Unique index ihlali).' 
+      return NextResponse.json({
+        error: 'Slug çakışması veya bu taslak daha önce yayınlanmış (Unique index ihlali).',
       }, { status: 409 });
     }
 
-    return NextResponse.json({ 
-      error: `Yayınlama başarısız oldu: ${error.message || 'Veritabanı işlem hatası'}` 
+    return NextResponse.json({
+      error: `Yayınlama başarısız oldu: ${error.message || 'Veritabanı hatası'}`,
     }, { status: 500 });
   }
 }

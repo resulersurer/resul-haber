@@ -17,9 +17,11 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // 1. Get the article details to find the draftId
+    // 1. Get the article + draft details in one query
     const articleRes = await db
-      .select({ draftId: publishedArticles.draftId })
+      .select({
+        draftId: publishedArticles.draftId,
+      })
       .from(publishedArticles)
       .where(eq(publishedArticles.id, id))
       .limit(1);
@@ -30,35 +32,34 @@ export async function DELETE(
 
     const { draftId } = articleRes[0];
 
-    // 2. Perform unpublish inside transaction
-    await db.transaction(async (tx) => {
-      // 2a. Delete from published_articles
-      await tx.delete(publishedArticles).where(eq(publishedArticles.id, id));
+    // Get draft's rawNewsItemId before deleting
+    const draftDetails = await db
+      .select({ rawNewsItemId: articleDrafts.rawNewsItemId })
+      .from(articleDrafts)
+      .where(eq(articleDrafts.id, draftId))
+      .limit(1);
 
-      // 2b. Revert article_drafts status to 'ready'
-      await tx
-        .update(articleDrafts)
-        .set({
-          status: 'ready',
-          publishedAt: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(articleDrafts.id, draftId));
+    // 2. Delete from published_articles
+    // neon-http driver transaction desteklemiyor — sıralı sorgular kullanıyoruz
+    await db.delete(publishedArticles).where(eq(publishedArticles.id, id));
 
-      // 2c. Get draft's rawNewsItemId to revert its status to 'draft_created'
-      const draftDetails = await tx
-        .select({ rawNewsItemId: articleDrafts.rawNewsItemId })
-        .from(articleDrafts)
-        .where(eq(articleDrafts.id, draftId))
-        .limit(1);
+    // 3. Revert article_drafts status to 'ready'
+    await db
+      .update(articleDrafts)
+      .set({
+        status: 'ready',
+        publishedAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(articleDrafts.id, draftId));
 
-      if (draftDetails.length > 0 && draftDetails[0].rawNewsItemId) {
-        await tx
-          .update(rawNewsItems)
-          .set({ status: 'draft_created' })
-          .where(eq(rawNewsItems.id, draftDetails[0].rawNewsItemId));
-      }
-    });
+    // 4. Revert raw_news_items status to 'draft_created'
+    if (draftDetails.length > 0 && draftDetails[0].rawNewsItemId) {
+      await db
+        .update(rawNewsItems)
+        .set({ status: 'draft_created' })
+        .where(eq(rawNewsItems.id, draftDetails[0].rawNewsItemId));
+    }
 
     return NextResponse.json({ message: 'Article unpublished successfully' });
   } catch (error) {
