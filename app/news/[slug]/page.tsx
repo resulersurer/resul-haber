@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import PublicHeader from '@/components/news/PublicHeader';
 import PublicFooter from '@/components/news/PublicFooter';
-import { Calendar, Tag, ExternalLink, ArrowLeft } from 'lucide-react';
+import { Calendar, Tag, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export const revalidate = 60; // Cache and revalidate public news detail page every 60 seconds
@@ -108,7 +108,7 @@ export default async function PublicNewsDetailPage({ params }: PageProps) {
               {new Date(article.publishedAt).toLocaleDateString('tr-TR')}
             </span>
             <span>•</span>
-            <span>Editör: Resul Ersürer AI</span>
+            <span>Editör: Resul Ersürer</span>
           </div>
         </div>
 
@@ -144,24 +144,7 @@ export default async function PublicNewsDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* Source attribution footer */}
-        <div className="mt-12 bg-slate-900/10 border border-slate-900 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-center sm:text-left">
-            <p className="text-xs font-bold text-slate-400">İçerik Kaynağı</p>
-            <p className="text-slate-500 text-[11px] mt-0.5">
-              Bu içerik, {article.sourceName} kaynağından çekilen ham haberin AI ile analizidir.
-            </p>
-          </div>
-          <a
-            href={article.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center space-x-1.5 bg-slate-950 border border-slate-850 hover:border-emerald-500/20 text-slate-350 hover:text-emerald-400 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all"
-          >
-            <span>Orijinal Haberi Oku</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        </div>
+
       </main>
 
       <PublicFooter />
