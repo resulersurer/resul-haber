@@ -48,9 +48,6 @@ Gelişmeye yönelik kısa, nesnel ve vizyoner bir bakış açısı ekle.
 ## Bilinmesi Gerekenler & İpuçları
 Okuyucu için faydalı 3-5 önemli detay yaz.
 
-## Kaynak
-Orijinal kaynak adını ve bağlantısını belirt.
-
 Yayınlama kriterleri:
 * Teknoloji, bilim, yapay zeka, internet, oyunlar, dijital yaşam, inovasyon, uzay, ekonomi alanları yayınlanabilir.
 * Alakasız siyasi tartışmalar, suç haberleri, magazin veya spam içerik yayınlanmamalıdır.
@@ -152,6 +149,14 @@ ${newsContent}`;
     }
 
     const parsedData = JSON.parse(cleaned);
+    
+    // content içindeki ## Kaynak bölümünü temizle
+    if (parsedData.content) {
+      parsedData.content = parsedData.content
+        .replace(/\n?##\s*Kaynak[\s\S]*$/i, '')
+        .trim();
+    }
+
     const validatedData = aiResponseSchema.parse(parsedData);
 
     return {

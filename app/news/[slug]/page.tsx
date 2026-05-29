@@ -126,7 +126,7 @@ export default async function PublicNewsDetailPage({ params }: PageProps) {
         {/* Article Body (Markdown rendered safely) */}
         <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed text-sm space-y-6">
           <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
-            {article.content}
+            {article.content.replace(/\n?##\s*Kaynak[\s\S]*$/i, '').trim()}
           </ReactMarkdown>
         </div>
 
