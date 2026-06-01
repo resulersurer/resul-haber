@@ -5,7 +5,8 @@ import { publishedArticles } from '@/db/schema';
 import { desc, sql } from 'drizzle-orm';
 import PublicHeader from '@/components/news/PublicHeader';
 import PublicFooter from '@/components/news/PublicFooter';
-import { Calendar, Tag, ArrowRight } from 'lucide-react';
+import { Calendar, ArrowRight } from 'lucide-react';
+import ArticleImage from '@/components/news/ArticleImage';
 
 export const revalidate = 60; // Cache and revalidate public news listing page every 60 seconds
 
@@ -103,20 +104,14 @@ export default async function PublicNewsListingPage() {
             {articles.map((article) => (
               <article key={article.id} className="group flex flex-col bg-slate-900/20 border border-slate-900 hover:border-slate-800 rounded-2xl overflow-hidden transition-all hover:translate-y-[-3px] relative shadow-lg">
                 {/* Featured Image */}
-                {article.featuredImageUrl ? (
-                  <div className="aspect-video overflow-hidden bg-slate-950 border-b border-slate-900 relative">
-                    <img
-                      src={article.featuredImageUrl}
-                      alt={article.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-video bg-slate-950 border-b border-slate-900 flex items-center justify-center text-slate-800">
-                    <Tag className="w-10 h-10 opacity-30" />
-                  </div>
-                )}
+                <div className="aspect-video overflow-hidden bg-slate-950 border-b border-slate-900 relative">
+                  <ArticleImage
+                    src={article.featuredImageUrl}
+                    alt={article.title}
+                    category={article.category}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
 
                 {/* Card Content */}
                 <div className="p-6 flex-1 flex flex-col justify-between">

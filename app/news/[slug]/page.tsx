@@ -8,8 +8,9 @@ import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import PublicHeader from '@/components/news/PublicHeader';
 import PublicFooter from '@/components/news/PublicFooter';
-import { Calendar, Tag, ArrowLeft } from 'lucide-react';
+import { Calendar, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import ArticleImage from '@/components/news/ArticleImage';
 
 export const revalidate = 60; // Cache and revalidate public news detail page every 60 seconds
 
@@ -113,15 +114,14 @@ export default async function PublicNewsDetailPage({ params }: PageProps) {
         </div>
 
         {/* Featured Image */}
-        {article.featuredImageUrl && (
-          <div className="rounded-2xl overflow-hidden border border-slate-900 aspect-video relative bg-slate-950 mb-10 shadow-lg">
-            <img
-              src={article.featuredImageUrl}
-              alt={article.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
+        <div className="rounded-2xl overflow-hidden border border-slate-900 aspect-video relative bg-slate-950 mb-10 shadow-lg">
+          <ArticleImage
+            src={article.featuredImageUrl}
+            alt={article.title}
+            category={article.category}
+            className="w-full h-full object-cover"
+          />
+        </div>
 
         {/* Article Body (Markdown rendered safely) */}
         <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed text-sm space-y-6">
