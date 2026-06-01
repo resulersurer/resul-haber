@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
@@ -16,7 +16,8 @@ import {
   Eye,
   Edit2,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  Upload
 } from 'lucide-react';
 
 interface Draft {
@@ -47,6 +48,8 @@ export default function ArticleDraftEditorPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [confirmImage, setConfirmImage] = useState(true);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form Fields
   const [title, setTitle] = useState('');
@@ -110,6 +113,34 @@ export default function ArticleDraftEditorPage() {
       toast.error(error.message || 'Görsel oluşturulamadı.');
     } finally {
       setIsGeneratingImage(false);
+    }
+  };
+
+  const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Yükleme başarısız');
+
+      setFeaturedImageUrl(data.imageUrl);
+      setConfirmImage(true);
+      toast.success('Görsel başarıyla yüklendi!');
+    } catch (error: any) {
+      toast.error(error.message || 'Görsel yüklenemedi.');
+    } finally {
+      setIsUploadingImage(false);
+      // Input'u sıfırla (aynı dosyayı tekrar seçebilmek için)
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -327,7 +358,33 @@ export default function ArticleDraftEditorPage() {
                   <ImageIcon className="w-4 h-4 text-slate-400" />
                   Görsel
                 </span>
-                <div className="flex items-center gap-3">
+              {/* Butonlar */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Gizli file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleUploadImage}
+                  />
+
+                  {/* Bilgisayardan Yükleme butonu */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                    className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 hover:border-emerald-400/50 text-emerald-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUploadingImage ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isUploadingImage ? 'Yükleniyor...' : 'Bilgisayardan Yükle'}</span>
+                  </button>
+
+                  {/* AI Görsel butonu */}
                   <button
                     type="button"
                     onClick={handleGenerateImage}
@@ -339,9 +396,10 @@ export default function ArticleDraftEditorPage() {
                     ) : (
                       <Sparkles className="w-3.5 h-3.5" />
                     )}
-                    <span>{isGeneratingImage ? 'Oluşturuluyor...' : 'AI Görsel Oluştur'}</span>
+                    <span>{isGeneratingImage ? 'Oluşturuluyor...' : 'AI Görsel'}</span>
                   </button>
-                  <div className="flex items-center space-x-2">
+
+                  <div className="flex items-center space-x-2 ml-1">
                     <input
                       type="checkbox"
                       id="confirmImage"
@@ -350,7 +408,7 @@ export default function ArticleDraftEditorPage() {
                       className="rounded bg-slate-955 border-slate-800 text-emerald-500 focus:ring-emerald-500/50 w-4 h-4 cursor-pointer"
                     />
                     <label htmlFor="confirmImage" className="text-xs font-semibold text-slate-400 select-none cursor-pointer">
-                      Görseli Öne Çıkar
+                      Öne Çıkar
                     </label>
                   </div>
                 </div>
