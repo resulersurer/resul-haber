@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth/options';
-import { put } from '@vercel/blob';
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -17,26 +16,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Dosya bulunamadı' }, { status: 400 });
     }
 
-    // Dosya tipi kontrolü
     if (!file.type.startsWith('image/')) {
       return NextResponse.json({ error: 'Sadece görsel dosyaları yüklenebilir' }, { status: 400 });
     }
 
-    // Dosya boyutu kontrolü (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Dosya boyutu 5MB\'ı geçemez' }, { status: 400 });
+    if (file.size > 32 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Dosya boyutu 32MB\'ı geçemez' }, { status: 400 });
     }
 
-    // Dosya adını temizle ve benzersiz yap
-    const ext = file.name.split('.').pop() || 'jpg';
-    const safeName = `articles/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const apiKey = process.env.IMGBB_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'IMGBB_API_KEY ortam değişkeni ayarlanmamış' }, { status: 500 });
+    }
 
-    // Vercel Blob'a yükle
-    const blob = await put(safeName, file, {
-      access: 'public',
+    // Dosyayı base64'e çevir
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+
+    // ImgBB API'sine yükle
+    const imgbbForm = new FormData();
+    imgbbForm.append('key', apiKey);
+    imgbbForm.append('image', base64);
+    imgbbForm.append('name', `article-${Date.now()}`);
+
+    const imgbbRes = await fetch('https://api.imgbb.com/1/upload', {
+      method: 'POST',
+      body: imgbbForm,
     });
 
-    return NextResponse.json({ imageUrl: blob.url });
+    const imgbbData = await imgbbRes.json();
+
+    if (!imgbbData.success) {
+      throw new Error(imgbbData.error?.message || 'ImgBB yükleme başarısız');
+    }
+
+    return NextResponse.json({
+      imageUrl: imgbbData.data.url,
+      displayUrl: imgbbData.data.display_url,
+    });
   } catch (error: any) {
     console.error('Upload error:', error);
     return NextResponse.json(
