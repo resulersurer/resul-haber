@@ -116,32 +116,54 @@ export default function ArticleDraftEditorPage() {
     }
   };
 
-  const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploadingImage(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await fetch('/api/admin/upload-image', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Yükleme başarısız');
-
-      setFeaturedImageUrl(data.imageUrl);
-      setConfirmImage(true);
-      toast.success('Görsel başarıyla yüklendi!');
-    } catch (error: any) {
-      toast.error(error.message || 'Görsel yüklenemedi.');
-    } finally {
-      setIsUploadingImage(false);
-      // Input'u sıfırla (aynı dosyayı tekrar seçebilmek için)
-      if (fileInputRef.current) fileInputRef.current.value = '';
+    if (!file.type.startsWith('image/')) {
+      toast.error('Sadece görsel dosyası seçebilirsiniz.');
+      return;
     }
+
+    setIsUploadingImage(true);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        // Max 1280x720 olacak şekilde oran koruyarak küçült
+        const MAX_W = 1280;
+        const MAX_H = 720;
+        let { width, height } = img;
+        if (width > MAX_W || height > MAX_H) {
+          const ratio = Math.min(MAX_W / width, MAX_H / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+        // JPEG %82 kalite ile sıkıştır (≈100-300KB)
+        const base64 = canvas.toDataURL('image/jpeg', 0.82);
+        setFeaturedImageUrl(base64);
+        setConfirmImage(true);
+        toast.success('Görsel yüklendi ve sıkıştırıldı!');
+        setIsUploadingImage(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      };
+      img.onerror = () => {
+        toast.error('Görsel okunamadı.');
+        setIsUploadingImage(false);
+      };
+      img.src = ev.target?.result as string;
+    };
+    reader.onerror = () => {
+      toast.error('Dosya okunamadı.');
+      setIsUploadingImage(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSave = async (statusOverride?: 'draft' | 'ready') => {
