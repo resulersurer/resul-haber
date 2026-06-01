@@ -14,7 +14,9 @@ import {
   Image as ImageIcon,
   AlertCircle,
   Eye,
-  Edit2
+  Edit2,
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 
 interface Draft {
@@ -44,6 +46,7 @@ export default function ArticleDraftEditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [confirmImage, setConfirmImage] = useState(true);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // Form Fields
   const [title, setTitle] = useState('');
@@ -89,6 +92,26 @@ export default function ArticleDraftEditorPage() {
   useEffect(() => {
     fetchDraftDetails();
   }, [id]);
+
+  const handleGenerateImage = async () => {
+    setIsGeneratingImage(true);
+    try {
+      const res = await fetch('/api/admin/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, category }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Görsel üretilemedi');
+      setFeaturedImageUrl(data.imageUrl);
+      setConfirmImage(true);
+      toast.success(`Görsel oluşturuldu! Anahtar kelimeler: ${data.keywords}`);
+    } catch (error: any) {
+      toast.error(error.message || 'Görsel oluşturulamadı.');
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
 
   const handleSave = async (statusOverride?: 'draft' | 'ready') => {
     setIsSaving(true);
@@ -302,19 +325,34 @@ export default function ArticleDraftEditorPage() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <ImageIcon className="w-4 h-4 text-slate-400" />
-                  Görsel İncelemesi
+                  Görsel
                 </span>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="confirmImage"
-                    checked={confirmImage}
-                    onChange={(e) => setConfirmImage(e.target.checked)}
-                    className="rounded bg-slate-955 border-slate-800 text-emerald-500 focus:ring-emerald-500/50 w-4 h-4 cursor-pointer"
-                  />
-                  <label htmlFor="confirmImage" className="text-xs font-semibold text-slate-400 select-none cursor-pointer">
-                    Görseli Onayla ve Öne Çıkar
-                  </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleGenerateImage}
+                    disabled={isGeneratingImage || !title}
+                    className="flex items-center gap-1.5 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 hover:border-violet-400/50 text-violet-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isGeneratingImage ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isGeneratingImage ? 'Oluşturuluyor...' : 'AI Görsel Oluştur'}</span>
+                  </button>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="confirmImage"
+                      checked={confirmImage}
+                      onChange={(e) => setConfirmImage(e.target.checked)}
+                      className="rounded bg-slate-955 border-slate-800 text-emerald-500 focus:ring-emerald-500/50 w-4 h-4 cursor-pointer"
+                    />
+                    <label htmlFor="confirmImage" className="text-xs font-semibold text-slate-400 select-none cursor-pointer">
+                      Görseli Öne Çıkar
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -324,7 +362,7 @@ export default function ArticleDraftEditorPage() {
                   value={featuredImageUrl}
                   onChange={(e) => setFeaturedImageUrl(e.target.value)}
                   className="w-full bg-slate-955 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-xs font-mono"
-                  placeholder="Görsel URL..."
+                  placeholder="Görsel URL veya AI Görsel Oluştur butonunu kullanın..."
                 />
               </div>
 
@@ -334,6 +372,9 @@ export default function ArticleDraftEditorPage() {
                     src={featuredImageUrl}
                     alt="Öne Çıkan Görsel"
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
                   />
                 </div>
               )}
