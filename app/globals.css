@@ -24,3 +24,12 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-newsreader), Georgia, serif;
 }
+
+/* Custom Utilities */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
