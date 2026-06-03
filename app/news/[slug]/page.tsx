@@ -80,41 +80,41 @@ export default async function PublicNewsDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
+    <div className="flex flex-col min-h-screen bg-bg-custom text-text-custom">
       <PublicHeader />
 
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-12">
         {/* Back Link */}
         <Link
           href="/news"
-          className="flex items-center space-x-2 text-slate-500 hover:text-emerald-400 transition-colors text-xs font-semibold mb-8 group"
+          className="flex items-center space-x-2 text-slate-500 hover:text-accent transition-colors text-xs font-semibold mb-8 group"
         >
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:translate-x-[-2px]" />
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:translate-x-[-2px] text-accent" />
           <span>Tüm Haberlere Dön</span>
         </Link>
 
         {/* Article Meta */}
         <div className="space-y-4 mb-8">
-          <span className="bg-slate-900 border border-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded">
+          <span className="bg-accent/10 border border-accent/20 text-accent text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg">
             {article.category}
           </span>
           
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-150 tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight leading-tight pt-2">
             {article.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-2 border-b border-slate-900/60 pb-4">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-2 border-b border-slate-200 pb-4">
+            <span className="flex items-center gap-1.5 font-medium">
+              <Calendar className="w-3.5 h-3.5 text-accent" />
               {new Date(article.publishedAt).toLocaleDateString('tr-TR')}
             </span>
-            <span>•</span>
-            <span>Editör: Resul Ersürer</span>
+            <span className="text-slate-350">•</span>
+            <span className="font-medium text-slate-650">Editör: Resul Ersürer</span>
           </div>
         </div>
 
         {/* Featured Image */}
-        <div className="rounded-2xl overflow-hidden border border-slate-900 aspect-video relative bg-slate-950 mb-10 shadow-lg">
+        <div className="rounded-2xl overflow-hidden border border-slate-200 aspect-video relative bg-white mb-10 shadow-md">
           <ArticleImage
             src={article.featuredImageUrl}
             alt={article.title}
@@ -124,7 +124,7 @@ export default async function PublicNewsDetailPage({ params }: PageProps) {
         </div>
 
         {/* Article Body (Markdown rendered safely) */}
-        <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed text-sm space-y-6">
+        <div className="prose max-w-none text-slate-800 leading-relaxed text-sm space-y-6">
           <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
             {article.content.replace(/\n?##\s*Kaynak[\s\S]*$/i, '').trim()}
           </ReactMarkdown>
@@ -132,19 +132,17 @@ export default async function PublicNewsDetailPage({ params }: PageProps) {
 
         {/* Tags Block */}
         {article.tags && article.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2.5 mt-10 pt-6 border-t border-slate-900">
+          <div className="flex flex-wrap gap-2.5 mt-10 pt-6 border-t border-slate-200">
             {article.tags.map((tag) => (
               <span
                 key={tag}
-                className="px-2.5 py-1 bg-slate-900 border border-slate-800/80 rounded-lg text-slate-400 text-xs font-medium"
+                className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-600 text-xs font-semibold shadow-sm"
               >
                 #{tag}
               </span>
             ))}
           </div>
         )}
-
-
       </main>
 
       <PublicFooter />
