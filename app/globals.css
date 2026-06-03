@@ -6,6 +6,8 @@
   --color-link: #0EA5E9;
   --color-bg-custom: #F3F4F6;
   --color-text-custom: #0B1220;
+  --font-sans: var(--font-inter), sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
 }
 
 :root {
@@ -16,5 +18,9 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-newsreader), Georgia, serif;
 }
