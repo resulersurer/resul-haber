@@ -15,7 +15,16 @@ const updateDraftSchema = z.object({
   tags: z.array(z.string()).optional(),
   seoTitle: z.string().min(1, 'SEO başlığı boş olamaz').optional(),
   seoDescription: z.string().min(1, 'SEO açıklaması boş olamaz').optional(),
-  featuredImageUrl: z.string().url('Geçerli bir URL olmalıdır').optional().nullable(),
+  featuredImageUrl: z
+    .string()
+    .refine(
+      (val) => !val || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:image/'),
+      {
+        message: 'Geçerli bir URL veya görsel verisi (Base64) olmalıdır',
+      }
+    )
+    .optional()
+    .nullable(),
   sourceName: z.string().min(1, 'Kaynak adı boş olamaz').optional(),
   sourceUrl: z.string().url('Geçerli bir URL olmalıdır').optional(),
   status: z.enum(['draft', 'ready', 'published']).optional(),
