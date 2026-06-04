@@ -1,21 +1,21 @@
 import { NextResponse } from 'next/server';
 
-export const revalidate = 300; // Cache for 5 minutes
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
     const [dovizRes, altinRes, kriptoRes] = await Promise.all([
       fetch('https://api.genelpara.com/json/?list=doviz', {
         headers: { 'User-Agent': 'Mozilla/5.0' },
-        next: { revalidate: 300 }
+        cache: 'no-store'
       }),
       fetch('https://api.genelpara.com/json/?list=altin', {
         headers: { 'User-Agent': 'Mozilla/5.0' },
-        next: { revalidate: 300 }
+        cache: 'no-store'
       }),
       fetch('https://api.genelpara.com/json/?list=kripto', {
         headers: { 'User-Agent': 'Mozilla/5.0' },
-        next: { revalidate: 300 }
+        cache: 'no-store'
       }),
     ]);
 
